@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: matrix-appset
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - matrix:
+        generators:
+          - git:
+              repoURL: https://github.com/example/my-app.git
+              revision: main
+              directories:
+                - path: "configs/cluster/engineering/*"
+              files:
+                - path: "configs/cluster/engineering/**/configs.json"
+          - list:
+              elements:
+                - env: {{ .path.path }}
+                  cluster: {{ .cluster.name }}
+  template:
+    metadata:
+      name: '{{ path.basename }}-{{ .env }}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/example/my-app.git
+        targetRevision: main
+        path: '{{ path }}/{{ .env }}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{ path.basename }}-{{ .env }}-namespace'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true

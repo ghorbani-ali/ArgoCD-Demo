@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: git-dir-appset
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/example/my-app.git
+        revision: main
+        directories:
+          - path: "configs/cluster/engineering/*"
+          - path: "configs/cluster/engineering/prod"
+            exclude: true
+  template:
+    metadata:
+      name: '{{path.basename}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/example/my-app.git
+        targetRevision: main
+        path: '{{path}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{path.basename}}-namespace'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true

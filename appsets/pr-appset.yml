@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: pr-appset
+  namespace: argocd
+spec:
+  generators:
+    - pullRequest:
+        github:
+          repo: example/my-app
+          tokenRef:
+            secretName: github-token
+            key: token
+        requeueAfterSeconds: 600
+  template:
+    metadata:
+      name: 'pr-{{number}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/example/my-app.git
+        targetRevision: '{{head.ref}}'
+        path: manifests
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: 'pr-{{number}}-namespace'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
