@@ -10,29 +10,35 @@ spec:
     - matrix:
         generators:
           - git:
-              repoURL: https://github.com/example/my-app.git
-              revision: main
-              directories:
-                - path: "configs/cluster/engineering/*"
+              repoURL: https://github.com/ghorbani-ali/ArgoCD-Demo.git
+              revision: HEAD
               files:
-                - path: "configs/cluster/engineering/**/configs.json"
+                - path: "configs/cluster/engineering/**/config.json"
           - list:
               elements:
-                - env: {{ .path.path }}
-                  cluster: {{ .cluster.name }}
+                - env: "{{ index .path.segments 3 }}"
+                  cluster: "{{ .cluster.address }}"
   template:
     metadata:
-      name: '{{ path.basename }}-{{ .env }}'
+      name: '{{ .env }}'
     spec:
       project: default
       source:
-        repoURL: https://github.com/example/my-app.git
-        targetRevision: main
-        path: '{{ path }}/{{ .env }}'
+        repoURL: https://github.com/ghorbani-ali/ArgoCD-Demo.git
+        targetRevision: HEAD
       destination:
         server: https://kubernetes.default.svc
-        namespace: '{{ path.basename }}-{{ .env }}-namespace'
+        namespace: '{{ .cluster.address }}-namespace'
       syncPolicy:
         automated:
           prune: true
           selfHeal: true
+  templatePatch: |
+    spec:
+       source:
+         repoURL: registry-1.docker.io/bitnamicharts
+         chart: nginx
+         targetRevision: 18.2.5
+       destination:
+        server: https://kubernetes.default.svc
+        namespace: default

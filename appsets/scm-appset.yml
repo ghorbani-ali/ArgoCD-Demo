@@ -1,32 +1,33 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: env-appset
+  name: github-appset
   namespace: argocd
 spec:
-  # goTemplate: true
-  # goTemplateOptions: ["missingkey=error"]
   generators:
-    - list:
-        elements:
-          - env: dev
-            cluster: https://dev-cluster.example.com
-          - env: staging
-            cluster: https://staging-cluster.example.com
-          - env: prod
-            cluster: https://prod-cluster.example.com
+    - scmProvider:
+        filters:
+          - repositoryMatch: "argo-test"
+            branchMatch: main
+        gitlab:
+          group: "55115479"
+          api: https://gitlab.com
+          includeSharedProjects: false
+          tokenRef:
+            secretName: gitlab-token
+            key: token
   template:
     metadata:
-      name: '{{ env }}-app'
+      name: '{{ .repository }}'
     spec:
       project: default
       source:
-        repoURL: https://github.com/ghorbani-ali/ArgoCD-Demo.git
+        repoURL: '{{ .url }}'
         targetRevision: main
-        path: 'manifests/{{ env }}'
+        path: manifests
       destination:
-        server: '{{ cluster }}'
-        namespace: '{{ env }}-namespace'
+        server: https://kubernetes.default.svc
+        namespace: '{{ .repository }}-namespace'
       syncPolicy:
         automated:
           prune: true

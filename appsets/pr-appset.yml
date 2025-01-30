@@ -4,27 +4,42 @@ metadata:
   name: pr-appset
   namespace: argocd
 spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
   generators:
     - pullRequest:
-        github:
-          repo: example/my-app
+        gitlab:
+          repo: https://gitlab.com
+          project: "66637646"
           tokenRef:
-            secretName: github-token
+            secretName: gitlab-token
             key: token
-        requeueAfterSeconds: 600
+          labels:
+          - preview
+          pullRequestState: opened
+        requeueAfterSeconds: 5
   template:
     metadata:
-      name: 'pr-{{number}}'
+      name: 'pr-{{ .number }}'
     spec:
       project: default
       source:
-        repoURL: https://github.com/example/my-app.git
-        targetRevision: '{{head.ref}}'
+        repoURL: https://gitlab.com/ghorbaniali/argo-test.git
+        targetRevision: '{{ .head_sha }}'
         path: manifests
       destination:
         server: https://kubernetes.default.svc
-        namespace: 'pr-{{number}}-namespace'
+        namespace: default
       syncPolicy:
         automated:
           prune: true
           selfHeal: true
+  templatePatch: |
+    spec:
+       source:
+         repoURL: registry-1.docker.io/bitnamicharts
+         chart: nginx
+         targetRevision: 18.2.5
+       destination:
+         server: https://kubernetes.default.svc
+         namespace: default
