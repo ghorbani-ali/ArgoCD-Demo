@@ -1,9 +1,11 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: github-appset
+  name: scm-appset
   namespace: argocd
 spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
   generators:
     - scmProvider:
         filters:
@@ -18,13 +20,12 @@ spec:
             key: token
   template:
     metadata:
-      name: '{{ .repository }}'
+      name: 'scm-{{ .repository }}'
     spec:
       project: default
       source:
         repoURL: '{{ .url }}'
         targetRevision: main
-        path: manifests
       destination:
         server: https://kubernetes.default.svc
         namespace: '{{ .repository }}-namespace'
