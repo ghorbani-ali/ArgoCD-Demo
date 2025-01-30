@@ -17,7 +17,7 @@ spec:
           labels:
           - preview
           pullRequestState: opened
-        requeueAfterSeconds: 5
+        requeueAfterSeconds: 60
   template:
     metadata:
       name: 'pr-{{ .number }}'
